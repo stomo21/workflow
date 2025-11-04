@@ -1,0 +1,44 @@
+# Node modules
+node_modules
+npm-debug.log
+
+# Build outputs
+dist
+build
+.next
+
+# Git
+.git
+.gitignore
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs
+
+# Test coverage
+coverage
+
+# Frontend specific
+frontend/node_modules
+frontend/dist
+frontend/.env
+
+# Backend specific
+backend/node_modules
+backend/dist
+backend/.env

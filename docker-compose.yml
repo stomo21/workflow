@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: workflow-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: workflow_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - workflow-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: workflow-app
+    environment:
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: workflow_db
+
+      # Application
+      PORT: 3001
+      NODE_ENV: production
+
+      # CORS
+      CORS_ORIGIN: http://localhost:3000
+
+      # Clerk - Replace with your actual keys
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-your_clerk_secret_key}
+      CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY:-your_clerk_publishable_key}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - workflow-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  workflow-network:
+    driver: bridge
