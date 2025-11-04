@@ -92,3 +92,15 @@ export const patternService = new BaseApiService('/patterns');
 export const exceptionService = new BaseApiService('/exceptions');
 export const claimService = new BaseApiService('/claims');
 export const decisionService = new BaseApiService('/decisions');
+
+// Audit log service
+export const auditLogService = {
+  async getEntityTimeline(entityType: string, entityId: string) {
+    const response = await apiClient.get(`/audit-logs/timeline/${entityType}/${entityId}`);
+    return response.data;
+  },
+  async getAll(params?: QueryParams) {
+    const response = await apiClient.get('/audit-logs', { params });
+    return response.data;
+  },
+};

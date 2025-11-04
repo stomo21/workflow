@@ -110,4 +110,38 @@ export class GroupController {
     );
     return group;
   }
+
+  @Post(':groupId/roles/:roleId')
+  async addRoleToGroup(
+    @Param('groupId') groupId: string,
+    @Param('roleId') roleId: string,
+    @CurrentUser() user: any,
+  ) {
+    const group = await this.groupService.addRoleToGroup(groupId, roleId);
+    this.eventsGateway.notifyEntityChange(
+      EventType.ENTITY_UPDATED,
+      'group',
+      group.id,
+      group,
+      user?.sub,
+    );
+    return group;
+  }
+
+  @Delete(':groupId/roles/:roleId')
+  async removeRoleFromGroup(
+    @Param('groupId') groupId: string,
+    @Param('roleId') roleId: string,
+    @CurrentUser() user: any,
+  ) {
+    const group = await this.groupService.removeRoleFromGroup(groupId, roleId);
+    this.eventsGateway.notifyEntityChange(
+      EventType.ENTITY_UPDATED,
+      'group',
+      group.id,
+      group,
+      user?.sub,
+    );
+    return group;
+  }
 }

@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { RbacModule } from './modules/rbac/rbac.module';
 import { WorkflowModule } from './modules/workflow/workflow.module';
+import { CommonModule } from './common/common.module';
 import { getDatabaseConfig } from './config/database.config';
-import { EventsGateway } from './common/gateways/events.gateway';
+import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
 
 @Module({
   imports: [
@@ -17,9 +19,15 @@ import { EventsGateway } from './common/gateways/events.gateway';
       inject: [ConfigService],
       useFactory: getDatabaseConfig,
     }),
+    CommonModule,
     RbacModule,
     WorkflowModule,
   ],
-  providers: [EventsGateway],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditLogInterceptor,
+    },
+  ],
 })
 export class AppModule {}

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Group } from '../entities/group.entity';
+import { Role } from '../entities/role.entity';
 import { BaseService } from '../../../common/services/base.service';
 import { CreateGroupDto, UpdateGroupDto } from '../dto/group.dto';
 
@@ -10,6 +11,8 @@ export class GroupService extends BaseService<Group> {
   constructor(
     @InjectRepository(Group)
     private groupRepository: Repository<Group>,
+    @InjectRepository(Role)
+    private roleRepository: Repository<Role>,
   ) {
     super(groupRepository);
   }
@@ -68,5 +71,48 @@ export class GroupService extends BaseService<Group> {
     await this.groupRepository.save(group);
 
     return this.findOne(groupId, ['users', 'roles']);
+  }
+
+  async addRoleToGroup(groupId: string, roleId: string): Promise<Group> {
+    const role = await this.roleRepository.findOne({
+      where: { id: roleId },
+      relations: ['groups'],
+    });
+
+    if (!role) {
+      throw new NotFoundException(`Role with ID ${roleId} not found`);
+    }
+
+    const group = await this.groupRepository.findOne({
+      where: { id: groupId },
+    });
+
+    if (!group) {
+      throw new NotFoundException(`Group with ID ${groupId} not found`);
+    }
+
+    // Add group to role if not already assigned
+    if (!role.groups.find((g) => g.id === groupId)) {
+      role.groups.push(group);
+      await this.roleRepository.save(role);
+    }
+
+    return this.findOne(groupId, ['users', 'roles', 'roles.permissions']);
+  }
+
+  async removeRoleFromGroup(groupId: string, roleId: string): Promise<Group> {
+    const role = await this.roleRepository.findOne({
+      where: { id: roleId },
+      relations: ['groups'],
+    });
+
+    if (!role) {
+      throw new NotFoundException(`Role with ID ${roleId} not found`);
+    }
+
+    role.groups = role.groups.filter((g) => g.id !== groupId);
+    await this.roleRepository.save(role);
+
+    return this.findOne(groupId, ['users', 'roles', 'roles.permissions']);
   }
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { ColumnDef } from '@tanstack/react-table';
 import { Pencil, Trash2, Plus } from 'lucide-react';
 import { DataTable } from '@/components/data-table/data-table';
@@ -17,6 +18,7 @@ interface User {
 }
 
 export default function UsersPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
@@ -138,7 +140,7 @@ export default function UsersPage() {
         data={usersData?.data || []}
         searchable
         searchPlaceholder="Search users..."
-        onRowClick={(user) => setSelectedUser(user)}
+        onRowClick={(user) => navigate(`/users/${user.id}`)}
       />
     </div>
   );
