@@ -4,89 +4,82 @@ import { ColumnDef } from '@tanstack/react-table';
 import { Pencil, Trash2, Plus } from 'lucide-react';
 import { DataTable } from '@/components/data-table/data-table';
 import { Button } from '@/components/ui/button';
-import { exceptionService } from '@/lib/api-client';
+import { decisionService } from '@/lib/api-client';
 import { wsClient, EventType } from '@/lib/websocket-client';
 
-interface Exception {
+interface Decision {
   id: string;
-  title: string;
   type: string;
-  status: string;
-  errorMessage?: string;
+  comment?: string;
+  decidedAt: string;
   createdAt: string;
 }
 
-export default function ExceptionsPage() {
+export default function DecisionsPage() {
   const queryClient = useQueryClient();
-  const [selectedException, setSelectedException] = useState<Exception | null>(null);
+  const [selectedDecision, setSelectedDecision] = useState<Decision | null>(null);
 
-  const { data: exceptionsData, isLoading } = useQuery({
-    queryKey: ['exceptions'],
-    queryFn: () => exceptionService.getAll(),
+  const { data: decisionsData, isLoading } = useQuery({
+    queryKey: ['decisions'],
+    queryFn: () => decisionService.getAll(),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => exceptionService.delete(id),
+    mutationFn: (id: string) => decisionService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['exceptions'] });
+      queryClient.invalidateQueries({ queryKey: ['decisions'] });
     },
   });
 
   useEffect(() => {
-    const handleExceptionEvent = () => {
-      queryClient.invalidateQueries({ queryKey: ['exceptions'] });
+    const handleDecisionEvent = () => {
+      queryClient.invalidateQueries({ queryKey: ['decisions'] });
     };
 
-    wsClient.on(EventType.ENTITY_CREATED, handleExceptionEvent);
-    wsClient.on(EventType.ENTITY_UPDATED, handleExceptionEvent);
-    wsClient.on(EventType.EXCEPTION_RAISED, handleExceptionEvent);
+    wsClient.on(EventType.ENTITY_CREATED, handleDecisionEvent);
+    wsClient.on(EventType.ENTITY_UPDATED, handleDecisionEvent);
+    wsClient.on(EventType.DECISION_MADE, handleDecisionEvent);
 
     return () => {
-      wsClient.off(EventType.ENTITY_CREATED, handleExceptionEvent);
-      wsClient.off(EventType.ENTITY_UPDATED, handleExceptionEvent);
-      wsClient.off(EventType.EXCEPTION_RAISED, handleExceptionEvent);
+      wsClient.off(EventType.ENTITY_CREATED, handleDecisionEvent);
+      wsClient.off(EventType.ENTITY_UPDATED, handleDecisionEvent);
+      wsClient.off(EventType.DECISION_MADE, handleDecisionEvent);
     };
   }, [queryClient]);
 
-  const columns: ColumnDef<Exception>[] = [
-    {
-      accessorKey: 'title',
-      header: 'Title',
-      enableSorting: true,
-    },
+  const columns: ColumnDef<Decision>[] = [
     {
       accessorKey: 'type',
       header: 'Type',
-      cell: ({ row }) => (
-        <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-purple-100 text-purple-700">
-          {row.original.type}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
       cell: ({ row }) => {
-        const status = row.original.status;
+        const type = row.original.type;
         const colorClass =
-          status === 'resolved'
+          type === 'approve'
             ? 'bg-green-100 text-green-700'
-            : status === 'open'
+            : type === 'reject'
             ? 'bg-red-100 text-red-700'
+            : type === 'delegate'
+            ? 'bg-blue-100 text-blue-700'
             : 'bg-yellow-100 text-yellow-700';
         return (
           <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${colorClass}`}>
-            {status}
+            {type}
           </span>
         );
       },
     },
     {
-      accessorKey: 'errorMessage',
-      header: 'Error Message',
+      accessorKey: 'comment',
+      header: 'Comment',
       cell: ({ row }) => (
-        <span className="truncate max-w-xs block">{row.original.errorMessage || 'N/A'}</span>
+        <span className="truncate max-w-xs block">{row.original.comment || 'No comment'}</span>
       ),
+    },
+    {
+      accessorKey: 'decidedAt',
+      header: 'Decided At',
+      cell: ({ row }) => new Date(row.original.decidedAt).toLocaleString(),
+      enableSorting: true,
     },
     {
       accessorKey: 'createdAt',
@@ -103,7 +96,7 @@ export default function ExceptionsPage() {
             size="icon"
             onClick={(e) => {
               e.stopPropagation();
-              setSelectedException(row.original);
+              setSelectedDecision(row.original);
             }}
           >
             <Pencil className="h-4 w-4" />
@@ -113,7 +106,7 @@ export default function ExceptionsPage() {
             size="icon"
             onClick={(e) => {
               e.stopPropagation();
-              if (confirm('Are you sure you want to delete this exception?')) {
+              if (confirm('Are you sure you want to delete this decision?')) {
                 deleteMutation.mutate(row.original.id);
               }
             }}
@@ -133,21 +126,21 @@ export default function ExceptionsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Exceptions</h1>
-          <p className="text-muted-foreground">Manage workflow exceptions</p>
+          <h1 className="text-3xl font-bold">Decisions</h1>
+          <p className="text-muted-foreground">View approval decisions</p>
         </div>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          Report Exception
+          Record Decision
         </Button>
       </div>
 
       <DataTable
         columns={columns}
-        data={exceptionsData?.data || []}
+        data={decisionsData?.data || []}
         searchable
-        searchPlaceholder="Search exceptions..."
-        onRowClick={(exception) => setSelectedException(exception)}
+        searchPlaceholder="Search decisions..."
+        onRowClick={(decision) => setSelectedDecision(decision)}
       />
     </div>
   );

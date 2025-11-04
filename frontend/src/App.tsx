@@ -14,6 +14,7 @@ import ApprovalsPage from './pages/workflow/ApprovalsPage';
 import PatternsPage from './pages/workflow/PatternsPage';
 import ExceptionsPage from './pages/workflow/ExceptionsPage';
 import ClaimsPage from './pages/workflow/ClaimsPage';
+import DecisionsPage from './pages/workflow/DecisionsPage';
 import AdminSettings from './pages/AdminSettings';
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ function AppContent() {
         <Route path="/patterns" element={<PatternsPage />} />
         <Route path="/exceptions" element={<ExceptionsPage />} />
         <Route path="/claims" element={<ClaimsPage />} />
+        <Route path="/decisions" element={<DecisionsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>

@@ -10,6 +10,7 @@ import {
   GitBranch,
   AlertTriangle,
   ClipboardList,
+  FileCheck,
   Settings,
   LayoutDashboard,
 } from 'lucide-react';
@@ -37,6 +38,7 @@ const navigation = [
       { name: 'Patterns', href: '/patterns', icon: GitBranch },
       { name: 'Exceptions', href: '/exceptions', icon: AlertTriangle },
       { name: 'Claims', href: '/claims', icon: ClipboardList },
+      { name: 'Decisions', href: '/decisions', icon: FileCheck },
     ],
   },
   { name: 'Admin Settings', href: '/admin', icon: Settings },
