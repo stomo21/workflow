@@ -5,16 +5,20 @@ import { Group } from '../entities/group.entity';
 import { Role } from '../entities/role.entity';
 import { BaseService } from '../../../common/services/base.service';
 import { CreateGroupDto, UpdateGroupDto } from '../dto/group.dto';
+import { EventsGateway, EventType } from '../../../common/gateways/events.gateway';
 
 @Injectable()
 export class GroupService extends BaseService<Group> {
+  protected entityName = 'group';
+
   constructor(
     @InjectRepository(Group)
     private groupRepository: Repository<Group>,
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
+    private eventsGateway: EventsGateway,
   ) {
-    super(groupRepository);
+    super(groupRepository, eventsGateway);
   }
 
   async createGroup(createGroupDto: CreateGroupDto, userId?: string): Promise<Group> {
@@ -23,7 +27,9 @@ export class GroupService extends BaseService<Group> {
       createdBy: userId,
     });
 
-    return this.groupRepository.save(group);
+    const savedGroup = await this.groupRepository.save(group);
+    this.notifyChange(EventType.ENTITY_CREATED, savedGroup.id, savedGroup, userId);
+    return savedGroup;
   }
 
   async updateGroup(id: string, updateGroupDto: UpdateGroupDto, userId?: string): Promise<Group> {
@@ -35,10 +41,12 @@ export class GroupService extends BaseService<Group> {
     Object.assign(group, updateGroupDto);
     group.updatedBy = userId;
 
-    return this.groupRepository.save(group);
+    const savedGroup = await this.groupRepository.save(group);
+    this.notifyChange(EventType.ENTITY_UPDATED, savedGroup.id, savedGroup, userId);
+    return savedGroup;
   }
 
-  async addUserToGroup(groupId: string, userId: string): Promise<Group> {
+  async addUserToGroup(groupId: string, userId: string, requestUserId?: string): Promise<Group> {
     const group = await this.groupRepository.findOne({
       where: { id: groupId },
       relations: ['users'],
@@ -54,10 +62,12 @@ export class GroupService extends BaseService<Group> {
       await this.groupRepository.save(group);
     }
 
-    return this.findOne(groupId, ['users', 'roles']);
+    const updatedGroup = await this.findOne(groupId, ['users', 'roles']);
+    this.notifyChange(EventType.ENTITY_UPDATED, updatedGroup.id, updatedGroup, requestUserId);
+    return updatedGroup;
   }
 
-  async removeUserFromGroup(groupId: string, userId: string): Promise<Group> {
+  async removeUserFromGroup(groupId: string, userId: string, requestUserId?: string): Promise<Group> {
     const group = await this.groupRepository.findOne({
       where: { id: groupId },
       relations: ['users'],
@@ -70,10 +80,12 @@ export class GroupService extends BaseService<Group> {
     group.users = group.users.filter((u) => u.id !== userId);
     await this.groupRepository.save(group);
 
-    return this.findOne(groupId, ['users', 'roles']);
+    const updatedGroup = await this.findOne(groupId, ['users', 'roles']);
+    this.notifyChange(EventType.ENTITY_UPDATED, updatedGroup.id, updatedGroup, requestUserId);
+    return updatedGroup;
   }
 
-  async addRoleToGroup(groupId: string, roleId: string): Promise<Group> {
+  async addRoleToGroup(groupId: string, roleId: string, requestUserId?: string): Promise<Group> {
     const role = await this.roleRepository.findOne({
       where: { id: roleId },
       relations: ['groups'],
@@ -97,10 +109,12 @@ export class GroupService extends BaseService<Group> {
       await this.roleRepository.save(role);
     }
 
-    return this.findOne(groupId, ['users', 'roles', 'roles.permissions']);
+    const updatedGroup = await this.findOne(groupId, ['users', 'roles', 'roles.permissions']);
+    this.notifyChange(EventType.ENTITY_UPDATED, updatedGroup.id, updatedGroup, requestUserId);
+    return updatedGroup;
   }
 
-  async removeRoleFromGroup(groupId: string, roleId: string): Promise<Group> {
+  async removeRoleFromGroup(groupId: string, roleId: string, requestUserId?: string): Promise<Group> {
     const role = await this.roleRepository.findOne({
       where: { id: roleId },
       relations: ['groups'],
@@ -113,6 +127,8 @@ export class GroupService extends BaseService<Group> {
     role.groups = role.groups.filter((g) => g.id !== groupId);
     await this.roleRepository.save(role);
 
-    return this.findOne(groupId, ['users', 'roles', 'roles.permissions']);
+    const updatedGroup = await this.findOne(groupId, ['users', 'roles', 'roles.permissions']);
+    this.notifyChange(EventType.ENTITY_UPDATED, updatedGroup.id, updatedGroup, requestUserId);
+    return updatedGroup;
   }
 }

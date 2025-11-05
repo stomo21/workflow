@@ -51,15 +51,7 @@ export class ClaimController {
 
   @Post()
   async create(@Body() createClaimDto: CreateClaimDto, @CurrentUser() user: any) {
-    const claim = await this.claimService.createClaim(createClaimDto, user?.sub);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_CREATED,
-      'claim',
-      claim.id,
-      claim,
-      user?.sub,
-    );
-    return claim;
+    return this.claimService.createClaim(createClaimDto, user?.sub);
   }
 
   @Put(':id')
@@ -69,13 +61,8 @@ export class ClaimController {
     @CurrentUser() user: any,
   ) {
     const claim = await this.claimService.updateClaim(id, updateClaimDto, user?.sub);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_UPDATED,
-      'claim',
-      claim.id,
-      claim,
-      user?.sub,
-    );
+
+    // Domain-specific event for claim updates
     this.eventsGateway.notifyEntityChange(
       EventType.CLAIM_UPDATED,
       'claim',
@@ -83,19 +70,15 @@ export class ClaimController {
       claim,
       user?.sub,
     );
+
     return claim;
   }
 
   @Post(':id/claim')
   async claimWorkItem(@Param('id') id: string, @CurrentUser() user: any) {
     const claim = await this.claimService.claimWorkItem(id, user.sub);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_UPDATED,
-      'claim',
-      claim.id,
-      claim,
-      user?.sub,
-    );
+
+    // Domain-specific event for work item claimed
     this.eventsGateway.notifyEntityChange(
       EventType.CLAIM_UPDATED,
       'claim',
@@ -103,19 +86,15 @@ export class ClaimController {
       claim,
       user?.sub,
     );
+
     return claim;
   }
 
   @Post(':id/complete')
   async complete(@Param('id') id: string, @CurrentUser() user: any) {
     const claim = await this.claimService.completeClaim(id, user?.sub);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_UPDATED,
-      'claim',
-      claim.id,
-      claim,
-      user?.sub,
-    );
+
+    // Domain-specific event for claim completion
     this.eventsGateway.notifyEntityChange(
       EventType.CLAIM_UPDATED,
       'claim',
@@ -123,19 +102,13 @@ export class ClaimController {
       claim,
       user?.sub,
     );
+
     return claim;
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.claimService.remove(id);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_DELETED,
-      'claim',
-      id,
-      { id },
-      user?.sub,
-    );
+    await this.claimService.removeWithNotification(id, user?.sub);
     return { message: 'Claim deleted successfully' };
   }
 }

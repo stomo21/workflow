@@ -4,14 +4,18 @@ import { Repository } from 'typeorm';
 import { Exception } from '../entities/exception.entity';
 import { BaseService } from '../../../common/services/base.service';
 import { CreateExceptionDto, UpdateExceptionDto } from '../dto/exception.dto';
+import { EventsGateway, EventType } from '../../../common/gateways/events.gateway';
 
 @Injectable()
 export class ExceptionService extends BaseService<Exception> {
+  protected entityName = 'exception';
+
   constructor(
     @InjectRepository(Exception)
     private exceptionRepository: Repository<Exception>,
+    private eventsGateway: EventsGateway,
   ) {
-    super(exceptionRepository);
+    super(exceptionRepository, eventsGateway);
   }
 
   async createException(createExceptionDto: CreateExceptionDto, userId?: string): Promise<Exception> {
@@ -20,7 +24,9 @@ export class ExceptionService extends BaseService<Exception> {
       createdBy: userId,
     });
 
-    return this.exceptionRepository.save(exception);
+    const savedException = await this.exceptionRepository.save(exception);
+    this.notifyChange(EventType.ENTITY_CREATED, savedException.id, savedException, userId);
+    return savedException;
   }
 
   async updateException(
@@ -36,7 +42,9 @@ export class ExceptionService extends BaseService<Exception> {
     Object.assign(exception, updateExceptionDto);
     exception.updatedBy = userId;
 
-    return this.exceptionRepository.save(exception);
+    const savedException = await this.exceptionRepository.save(exception);
+    this.notifyChange(EventType.ENTITY_UPDATED, savedException.id, savedException, userId);
+    return savedException;
   }
 
   async resolveException(id: string, resolution: string, userId?: string): Promise<Exception> {
@@ -51,7 +59,9 @@ export class ExceptionService extends BaseService<Exception> {
     exception.resolvedAt = new Date();
     exception.updatedBy = userId;
 
-    return this.exceptionRepository.save(exception);
+    const savedException = await this.exceptionRepository.save(exception);
+    this.notifyChange(EventType.ENTITY_UPDATED, savedException.id, savedException, userId);
+    return savedException;
   }
 
   async findByType(type: string, queryParams: any) {

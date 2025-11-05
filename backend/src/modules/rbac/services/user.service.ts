@@ -6,9 +6,12 @@ import { Group } from '../entities/group.entity';
 import { Role } from '../entities/role.entity';
 import { BaseService } from '../../../common/services/base.service';
 import { CreateUserDto, UpdateUserDto } from '../dto/create-user.dto';
+import { EventsGateway, EventType } from '../../../common/gateways/events.gateway';
 
 @Injectable()
 export class UserService extends BaseService<User> {
+  protected entityName = 'user';
+
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
@@ -16,8 +19,9 @@ export class UserService extends BaseService<User> {
     private groupRepository: Repository<Group>,
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
+    private eventsGateway: EventsGateway,
   ) {
-    super(userRepository);
+    super(userRepository, eventsGateway);
   }
 
   async findByClerkId(clerkId: string): Promise<User> {
@@ -34,13 +38,14 @@ export class UserService extends BaseService<User> {
     });
   }
 
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
+  async createUser(createUserDto: CreateUserDto, userId?: string): Promise<User> {
     const user = this.userRepository.create({
       clerkId: createUserDto.clerkId,
       email: createUserDto.email,
       firstName: createUserDto.firstName,
       lastName: createUserDto.lastName,
       imageUrl: createUserDto.imageUrl,
+      createdBy: userId,
     });
 
     if (createUserDto.groupIds && createUserDto.groupIds.length > 0) {
@@ -55,10 +60,12 @@ export class UserService extends BaseService<User> {
       });
     }
 
-    return this.userRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
+    this.notifyChange(EventType.ENTITY_CREATED, savedUser.id, savedUser, userId);
+    return savedUser;
   }
 
-  async updateUser(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+  async updateUser(id: string, updateUserDto: UpdateUserDto, userId?: string): Promise<User> {
     const user = await this.findOne(id, ['groups', 'roles']);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
@@ -67,6 +74,7 @@ export class UserService extends BaseService<User> {
     if (updateUserDto.firstName !== undefined) user.firstName = updateUserDto.firstName;
     if (updateUserDto.lastName !== undefined) user.lastName = updateUserDto.lastName;
     if (updateUserDto.imageUrl !== undefined) user.imageUrl = updateUserDto.imageUrl;
+    user.updatedBy = userId;
 
     if (updateUserDto.groupIds !== undefined) {
       user.groups = await this.groupRepository.findBy({
@@ -80,7 +88,9 @@ export class UserService extends BaseService<User> {
       });
     }
 
-    return this.userRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
+    this.notifyChange(EventType.ENTITY_UPDATED, savedUser.id, savedUser, userId);
+    return savedUser;
   }
 
   async getUserPermissions(userId: string): Promise<string[]> {

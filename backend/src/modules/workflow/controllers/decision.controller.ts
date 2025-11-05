@@ -52,13 +52,8 @@ export class DecisionController {
   @Post()
   async create(@Body() createDecisionDto: CreateDecisionDto, @CurrentUser() user: any) {
     const decision = await this.decisionService.createDecision(createDecisionDto, user?.sub);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_CREATED,
-      'decision',
-      decision.id,
-      decision,
-      user?.sub,
-    );
+
+    // Domain-specific event for decision made
     this.eventsGateway.notifyEntityChange(
       EventType.DECISION_MADE,
       'decision',
@@ -66,6 +61,7 @@ export class DecisionController {
       decision,
       user?.sub,
     );
+
     return decision;
   }
 
@@ -75,27 +71,12 @@ export class DecisionController {
     @Body() updateDecisionDto: UpdateDecisionDto,
     @CurrentUser() user: any,
   ) {
-    const decision = await this.decisionService.updateDecision(id, updateDecisionDto, user?.sub);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_UPDATED,
-      'decision',
-      decision.id,
-      decision,
-      user?.sub,
-    );
-    return decision;
+    return this.decisionService.updateDecision(id, updateDecisionDto, user?.sub);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.decisionService.remove(id);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_DELETED,
-      'decision',
-      id,
-      { id },
-      user?.sub,
-    );
+    await this.decisionService.removeWithNotification(id, user?.sub);
     return { message: 'Decision deleted successfully' };
   }
 }

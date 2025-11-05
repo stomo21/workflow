@@ -13,7 +13,6 @@ import { PermissionService } from '../services/permission.service';
 import { CreatePermissionDto, UpdatePermissionDto } from '../dto/permission.dto';
 import { ClerkAuthGuard } from '../../../common/guards/clerk-auth.guard';
 import { CurrentUser } from '../../../common/decorators/user.decorator';
-import { EventsGateway, EventType } from '../../../common/gateways/events.gateway';
 import { QueryParams } from '../../../common/services/base.service';
 
 @Controller('permissions')
@@ -21,7 +20,6 @@ import { QueryParams } from '../../../common/services/base.service';
 export class PermissionController {
   constructor(
     private readonly permissionService: PermissionService,
-    private readonly eventsGateway: EventsGateway,
   ) {}
 
   @Get()
@@ -46,15 +44,7 @@ export class PermissionController {
 
   @Post()
   async create(@Body() createPermissionDto: CreatePermissionDto, @CurrentUser() user: any) {
-    const permission = await this.permissionService.createPermission(createPermissionDto, user?.sub);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_CREATED,
-      'permission',
-      permission.id,
-      permission,
-      user?.sub,
-    );
-    return permission;
+    return this.permissionService.createPermission(createPermissionDto, user?.sub);
   }
 
   @Put(':id')
@@ -63,27 +53,12 @@ export class PermissionController {
     @Body() updatePermissionDto: UpdatePermissionDto,
     @CurrentUser() user: any,
   ) {
-    const permission = await this.permissionService.updatePermission(id, updatePermissionDto, user?.sub);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_UPDATED,
-      'permission',
-      permission.id,
-      permission,
-      user?.sub,
-    );
-    return permission;
+    return this.permissionService.updatePermission(id, updatePermissionDto, user?.sub);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.permissionService.remove(id);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_DELETED,
-      'permission',
-      id,
-      { id },
-      user?.sub,
-    );
+    await this.permissionService.removeWithNotification(id, user?.sub);
     return { message: 'Permission deleted successfully' };
   }
 }

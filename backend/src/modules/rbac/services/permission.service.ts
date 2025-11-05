@@ -4,14 +4,18 @@ import { Repository } from 'typeorm';
 import { Permission } from '../entities/permission.entity';
 import { BaseService } from '../../../common/services/base.service';
 import { CreatePermissionDto, UpdatePermissionDto } from '../dto/permission.dto';
+import { EventsGateway, EventType } from '../../../common/gateways/events.gateway';
 
 @Injectable()
 export class PermissionService extends BaseService<Permission> {
+  protected entityName = 'permission';
+
   constructor(
     @InjectRepository(Permission)
     private permissionRepository: Repository<Permission>,
+    private eventsGateway: EventsGateway,
   ) {
-    super(permissionRepository);
+    super(permissionRepository, eventsGateway);
   }
 
   async createPermission(createPermissionDto: CreatePermissionDto, userId?: string): Promise<Permission> {
@@ -20,7 +24,9 @@ export class PermissionService extends BaseService<Permission> {
       createdBy: userId,
     });
 
-    return this.permissionRepository.save(permission);
+    const savedPermission = await this.permissionRepository.save(permission);
+    this.notifyChange(EventType.ENTITY_CREATED, savedPermission.id, savedPermission, userId);
+    return savedPermission;
   }
 
   async updatePermission(
@@ -36,7 +42,9 @@ export class PermissionService extends BaseService<Permission> {
     Object.assign(permission, updatePermissionDto);
     permission.updatedBy = userId;
 
-    return this.permissionRepository.save(permission);
+    const savedPermission = await this.permissionRepository.save(permission);
+    this.notifyChange(EventType.ENTITY_UPDATED, savedPermission.id, savedPermission, userId);
+    return savedPermission;
   }
 
   async findByAction(action: string): Promise<Permission[]> {

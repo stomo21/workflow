@@ -46,15 +46,7 @@ export class ApprovalController {
 
   @Post()
   async create(@Body() createApprovalDto: CreateApprovalDto, @CurrentUser() user: any) {
-    const approval = await this.approvalService.createApproval(createApprovalDto, user?.sub);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_CREATED,
-      'approval',
-      approval.id,
-      approval,
-      user?.sub,
-    );
-    return approval;
+    return this.approvalService.createApproval(createApprovalDto, user?.sub);
   }
 
   @Put(':id')
@@ -64,14 +56,8 @@ export class ApprovalController {
     @CurrentUser() user: any,
   ) {
     const approval = await this.approvalService.updateApproval(id, updateApprovalDto, user?.sub);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_UPDATED,
-      'approval',
-      approval.id,
-      approval,
-      user?.sub,
-    );
 
+    // Domain-specific event for status changes
     if (updateApprovalDto.status) {
       this.eventsGateway.notifyEntityChange(
         EventType.APPROVAL_STATUS_CHANGED,
@@ -87,14 +73,7 @@ export class ApprovalController {
 
   @Delete(':id')
   async remove(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.approvalService.remove(id);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_DELETED,
-      'approval',
-      id,
-      { id },
-      user?.sub,
-    );
+    await this.approvalService.removeWithNotification(id, user?.sub);
     return { message: 'Approval deleted successfully' };
   }
 }

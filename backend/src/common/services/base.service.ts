@@ -1,5 +1,6 @@
 import { Repository, FindOptionsWhere, ILike, FindManyOptions } from 'typeorm';
 import { BaseEntity } from '../entities/base.entity';
+import { EventsGateway, EventType } from '../gateways/events.gateway';
 
 export interface QueryParams {
   page?: number;
@@ -19,8 +20,13 @@ export interface PaginatedResult<T> {
   totalPages: number;
 }
 
-export class BaseService<T extends BaseEntity> {
-  constructor(protected readonly repository: Repository<T>) {}
+export abstract class BaseService<T extends BaseEntity> {
+  protected abstract entityName: string;
+
+  constructor(
+    protected readonly repository: Repository<T>,
+    protected readonly eventsGateway?: EventsGateway,
+  ) {}
 
   async findAll(queryParams: QueryParams = {}): Promise<PaginatedResult<T>> {
     const {
@@ -99,5 +105,35 @@ export class BaseService<T extends BaseEntity> {
 
   async restore(id: string): Promise<void> {
     await this.repository.restore(id);
+  }
+
+  // Enhanced methods with event notifications
+  async createWithNotification(createDto: Partial<T>, userId?: string): Promise<T> {
+    const entity = await this.create(createDto, userId);
+    this.notifyChange(EventType.ENTITY_CREATED, entity.id, entity, userId);
+    return entity;
+  }
+
+  async updateWithNotification(id: string, updateDto: Partial<T>, userId?: string): Promise<T> {
+    const entity = await this.update(id, updateDto, userId);
+    this.notifyChange(EventType.ENTITY_UPDATED, entity.id, entity, userId);
+    return entity;
+  }
+
+  async removeWithNotification(id: string, userId?: string): Promise<void> {
+    await this.remove(id);
+    this.notifyChange(EventType.ENTITY_DELETED, id, { id }, userId);
+  }
+
+  protected notifyChange(eventType: EventType, entityId: string, data: any, userId?: string): void {
+    if (this.eventsGateway) {
+      this.eventsGateway.notifyEntityChange(
+        eventType,
+        this.entityName,
+        entityId,
+        data,
+        userId,
+      );
+    }
   }
 }

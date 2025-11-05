@@ -4,14 +4,18 @@ import { Repository } from 'typeorm';
 import { Approval } from '../entities/approval.entity';
 import { BaseService } from '../../../common/services/base.service';
 import { CreateApprovalDto, UpdateApprovalDto } from '../dto/approval.dto';
+import { EventsGateway, EventType } from '../../../common/gateways/events.gateway';
 
 @Injectable()
 export class ApprovalService extends BaseService<Approval> {
+  protected entityName = 'approval';
+
   constructor(
     @InjectRepository(Approval)
     private approvalRepository: Repository<Approval>,
+    private eventsGateway: EventsGateway,
   ) {
-    super(approvalRepository);
+    super(approvalRepository, eventsGateway);
   }
 
   async createApproval(createApprovalDto: CreateApprovalDto, userId?: string): Promise<Approval> {
@@ -20,7 +24,9 @@ export class ApprovalService extends BaseService<Approval> {
       createdBy: userId,
     });
 
-    return this.approvalRepository.save(approval);
+    const savedApproval = await this.approvalRepository.save(approval);
+    this.notifyChange(EventType.ENTITY_CREATED, savedApproval.id, savedApproval, userId);
+    return savedApproval;
   }
 
   async updateApproval(
@@ -36,7 +42,9 @@ export class ApprovalService extends BaseService<Approval> {
     Object.assign(approval, updateApprovalDto);
     approval.updatedBy = userId;
 
-    return this.approvalRepository.save(approval);
+    const savedApproval = await this.approvalRepository.save(approval);
+    this.notifyChange(EventType.ENTITY_UPDATED, savedApproval.id, savedApproval, userId);
+    return savedApproval;
   }
 
   async findByAssignee(userId: string, queryParams: any) {

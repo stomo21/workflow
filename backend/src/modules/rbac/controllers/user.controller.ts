@@ -13,7 +13,6 @@ import { UserService } from '../services/user.service';
 import { CreateUserDto, UpdateUserDto } from '../dto/create-user.dto';
 import { ClerkAuthGuard } from '../../../common/guards/clerk-auth.guard';
 import { CurrentUser } from '../../../common/decorators/user.decorator';
-import { EventsGateway, EventType } from '../../../common/gateways/events.gateway';
 import { QueryParams } from '../../../common/services/base.service';
 
 @Controller('users')
@@ -21,7 +20,6 @@ import { QueryParams } from '../../../common/services/base.service';
 export class UserController {
   constructor(
     private readonly userService: UserService,
-    private readonly eventsGateway: EventsGateway,
   ) {}
 
   @Get()
@@ -41,15 +39,7 @@ export class UserController {
 
   @Post()
   async create(@Body() createUserDto: CreateUserDto, @CurrentUser() user: any) {
-    const newUser = await this.userService.createUser(createUserDto);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_CREATED,
-      'user',
-      newUser.id,
-      newUser,
-      user?.sub,
-    );
-    return newUser;
+    return this.userService.createUser(createUserDto, user?.sub);
   }
 
   @Put(':id')
@@ -58,27 +48,12 @@ export class UserController {
     @Body() updateUserDto: UpdateUserDto,
     @CurrentUser() user: any,
   ) {
-    const updatedUser = await this.userService.updateUser(id, updateUserDto);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_UPDATED,
-      'user',
-      updatedUser.id,
-      updatedUser,
-      user?.sub,
-    );
-    return updatedUser;
+    return this.userService.updateUser(id, updateUserDto, user?.sub);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.userService.remove(id);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_DELETED,
-      'user',
-      id,
-      { id },
-      user?.sub,
-    );
+    await this.userService.removeWithNotification(id, user?.sub);
     return { message: 'User deleted successfully' };
   }
 }

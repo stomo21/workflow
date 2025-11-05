@@ -4,14 +4,18 @@ import { Repository } from 'typeorm';
 import { Claim } from '../entities/claim.entity';
 import { BaseService } from '../../../common/services/base.service';
 import { CreateClaimDto, UpdateClaimDto } from '../dto/claim.dto';
+import { EventsGateway, EventType } from '../../../common/gateways/events.gateway';
 
 @Injectable()
 export class ClaimService extends BaseService<Claim> {
+  protected entityName = 'claim';
+
   constructor(
     @InjectRepository(Claim)
     private claimRepository: Repository<Claim>,
+    private eventsGateway: EventsGateway,
   ) {
-    super(claimRepository);
+    super(claimRepository, eventsGateway);
   }
 
   async createClaim(createClaimDto: CreateClaimDto, userId?: string): Promise<Claim> {
@@ -20,7 +24,9 @@ export class ClaimService extends BaseService<Claim> {
       createdBy: userId,
     });
 
-    return this.claimRepository.save(claim);
+    const savedClaim = await this.claimRepository.save(claim);
+    this.notifyChange(EventType.ENTITY_CREATED, savedClaim.id, savedClaim, userId);
+    return savedClaim;
   }
 
   async updateClaim(
@@ -36,7 +42,9 @@ export class ClaimService extends BaseService<Claim> {
     Object.assign(claim, updateClaimDto);
     claim.updatedBy = userId;
 
-    return this.claimRepository.save(claim);
+    const savedClaim = await this.claimRepository.save(claim);
+    this.notifyChange(EventType.ENTITY_UPDATED, savedClaim.id, savedClaim, userId);
+    return savedClaim;
   }
 
   async claimWorkItem(id: string, userId: string): Promise<Claim> {
@@ -50,7 +58,9 @@ export class ClaimService extends BaseService<Claim> {
     claim.status = 'in_progress' as any;
     claim.updatedBy = userId;
 
-    return this.claimRepository.save(claim);
+    const savedClaim = await this.claimRepository.save(claim);
+    this.notifyChange(EventType.ENTITY_UPDATED, savedClaim.id, savedClaim, userId);
+    return savedClaim;
   }
 
   async completeClaim(id: string, userId?: string): Promise<Claim> {
@@ -63,7 +73,9 @@ export class ClaimService extends BaseService<Claim> {
     claim.completedAt = new Date();
     claim.updatedBy = userId;
 
-    return this.claimRepository.save(claim);
+    const savedClaim = await this.claimRepository.save(claim);
+    this.notifyChange(EventType.ENTITY_UPDATED, savedClaim.id, savedClaim, userId);
+    return savedClaim;
   }
 
   async findByUser(userId: string, queryParams: any) {

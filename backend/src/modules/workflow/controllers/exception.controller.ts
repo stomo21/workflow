@@ -47,13 +47,8 @@ export class ExceptionController {
   @Post()
   async create(@Body() createExceptionDto: CreateExceptionDto, @CurrentUser() user: any) {
     const exception = await this.exceptionService.createException(createExceptionDto, user?.sub);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_CREATED,
-      'exception',
-      exception.id,
-      exception,
-      user?.sub,
-    );
+
+    // Domain-specific event for exception raised
     this.eventsGateway.notifyEntityChange(
       EventType.EXCEPTION_RAISED,
       'exception',
@@ -61,6 +56,7 @@ export class ExceptionController {
       exception,
       user?.sub,
     );
+
     return exception;
   }
 
@@ -70,15 +66,7 @@ export class ExceptionController {
     @Body() updateExceptionDto: UpdateExceptionDto,
     @CurrentUser() user: any,
   ) {
-    const exception = await this.exceptionService.updateException(id, updateExceptionDto, user?.sub);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_UPDATED,
-      'exception',
-      exception.id,
-      exception,
-      user?.sub,
-    );
-    return exception;
+    return this.exceptionService.updateException(id, updateExceptionDto, user?.sub);
   }
 
   @Post(':id/resolve')
@@ -87,27 +75,12 @@ export class ExceptionController {
     @Body() body: { resolution: string },
     @CurrentUser() user: any,
   ) {
-    const exception = await this.exceptionService.resolveException(id, body.resolution, user?.sub);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_UPDATED,
-      'exception',
-      exception.id,
-      exception,
-      user?.sub,
-    );
-    return exception;
+    return this.exceptionService.resolveException(id, body.resolution, user?.sub);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.exceptionService.remove(id);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_DELETED,
-      'exception',
-      id,
-      { id },
-      user?.sub,
-    );
+    await this.exceptionService.removeWithNotification(id, user?.sub);
     return { message: 'Exception deleted successfully' };
   }
 }

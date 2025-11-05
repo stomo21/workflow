@@ -13,7 +13,6 @@ import { RoleService } from '../services/role.service';
 import { CreateRoleDto, UpdateRoleDto } from '../dto/role.dto';
 import { ClerkAuthGuard } from '../../../common/guards/clerk-auth.guard';
 import { CurrentUser } from '../../../common/decorators/user.decorator';
-import { EventsGateway, EventType } from '../../../common/gateways/events.gateway';
 import { QueryParams } from '../../../common/services/base.service';
 
 @Controller('roles')
@@ -21,7 +20,6 @@ import { QueryParams } from '../../../common/services/base.service';
 export class RoleController {
   constructor(
     private readonly roleService: RoleService,
-    private readonly eventsGateway: EventsGateway,
   ) {}
 
   @Get()
@@ -36,15 +34,7 @@ export class RoleController {
 
   @Post()
   async create(@Body() createRoleDto: CreateRoleDto, @CurrentUser() user: any) {
-    const role = await this.roleService.createRole(createRoleDto);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_CREATED,
-      'role',
-      role.id,
-      role,
-      user?.sub,
-    );
-    return role;
+    return this.roleService.createRole(createRoleDto, user?.sub);
   }
 
   @Put(':id')
@@ -53,27 +43,12 @@ export class RoleController {
     @Body() updateRoleDto: UpdateRoleDto,
     @CurrentUser() user: any,
   ) {
-    const role = await this.roleService.updateRole(id, updateRoleDto);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_UPDATED,
-      'role',
-      role.id,
-      role,
-      user?.sub,
-    );
-    return role;
+    return this.roleService.updateRole(id, updateRoleDto, user?.sub);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.roleService.remove(id);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_DELETED,
-      'role',
-      id,
-      { id },
-      user?.sub,
-    );
+    await this.roleService.removeWithNotification(id, user?.sub);
     return { message: 'Role deleted successfully' };
   }
 }

@@ -4,14 +4,18 @@ import { Repository } from 'typeorm';
 import { Decision } from '../entities/decision.entity';
 import { BaseService } from '../../../common/services/base.service';
 import { CreateDecisionDto, UpdateDecisionDto } from '../dto/decision.dto';
+import { EventsGateway, EventType } from '../../../common/gateways/events.gateway';
 
 @Injectable()
 export class DecisionService extends BaseService<Decision> {
+  protected entityName = 'decision';
+
   constructor(
     @InjectRepository(Decision)
     private decisionRepository: Repository<Decision>,
+    private eventsGateway: EventsGateway,
   ) {
-    super(decisionRepository);
+    super(decisionRepository, eventsGateway);
   }
 
   async createDecision(createDecisionDto: CreateDecisionDto, userId?: string): Promise<Decision> {
@@ -20,7 +24,9 @@ export class DecisionService extends BaseService<Decision> {
       createdBy: userId,
     });
 
-    return this.decisionRepository.save(decision);
+    const savedDecision = await this.decisionRepository.save(decision);
+    this.notifyChange(EventType.ENTITY_CREATED, savedDecision.id, savedDecision, userId);
+    return savedDecision;
   }
 
   async updateDecision(
@@ -36,7 +42,9 @@ export class DecisionService extends BaseService<Decision> {
     Object.assign(decision, updateDecisionDto);
     decision.updatedBy = userId;
 
-    return this.decisionRepository.save(decision);
+    const savedDecision = await this.decisionRepository.save(decision);
+    this.notifyChange(EventType.ENTITY_UPDATED, savedDecision.id, savedDecision, userId);
+    return savedDecision;
   }
 
   async findByApproval(approvalId: string, queryParams: any) {

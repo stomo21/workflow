@@ -13,7 +13,6 @@ import { GroupService } from '../services/group.service';
 import { CreateGroupDto, UpdateGroupDto } from '../dto/group.dto';
 import { ClerkAuthGuard } from '../../../common/guards/clerk-auth.guard';
 import { CurrentUser } from '../../../common/decorators/user.decorator';
-import { EventsGateway, EventType } from '../../../common/gateways/events.gateway';
 import { QueryParams } from '../../../common/services/base.service';
 
 @Controller('groups')
@@ -21,7 +20,6 @@ import { QueryParams } from '../../../common/services/base.service';
 export class GroupController {
   constructor(
     private readonly groupService: GroupService,
-    private readonly eventsGateway: EventsGateway,
   ) {}
 
   @Get()
@@ -36,15 +34,7 @@ export class GroupController {
 
   @Post()
   async create(@Body() createGroupDto: CreateGroupDto, @CurrentUser() user: any) {
-    const group = await this.groupService.createGroup(createGroupDto, user?.sub);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_CREATED,
-      'group',
-      group.id,
-      group,
-      user?.sub,
-    );
-    return group;
+    return this.groupService.createGroup(createGroupDto, user?.sub);
   }
 
   @Put(':id')
@@ -53,27 +43,12 @@ export class GroupController {
     @Body() updateGroupDto: UpdateGroupDto,
     @CurrentUser() user: any,
   ) {
-    const group = await this.groupService.updateGroup(id, updateGroupDto, user?.sub);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_UPDATED,
-      'group',
-      group.id,
-      group,
-      user?.sub,
-    );
-    return group;
+    return this.groupService.updateGroup(id, updateGroupDto, user?.sub);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.groupService.remove(id);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_DELETED,
-      'group',
-      id,
-      { id },
-      user?.sub,
-    );
+    await this.groupService.removeWithNotification(id, user?.sub);
     return { message: 'Group deleted successfully' };
   }
 
@@ -83,15 +58,7 @@ export class GroupController {
     @Param('userId') userId: string,
     @CurrentUser() user: any,
   ) {
-    const group = await this.groupService.addUserToGroup(groupId, userId);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_UPDATED,
-      'group',
-      group.id,
-      group,
-      user?.sub,
-    );
-    return group;
+    return this.groupService.addUserToGroup(groupId, userId, user?.sub);
   }
 
   @Delete(':groupId/users/:userId')
@@ -100,15 +67,7 @@ export class GroupController {
     @Param('userId') userId: string,
     @CurrentUser() user: any,
   ) {
-    const group = await this.groupService.removeUserFromGroup(groupId, userId);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_UPDATED,
-      'group',
-      group.id,
-      group,
-      user?.sub,
-    );
-    return group;
+    return this.groupService.removeUserFromGroup(groupId, userId, user?.sub);
   }
 
   @Post(':groupId/roles/:roleId')
@@ -117,15 +76,7 @@ export class GroupController {
     @Param('roleId') roleId: string,
     @CurrentUser() user: any,
   ) {
-    const group = await this.groupService.addRoleToGroup(groupId, roleId);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_UPDATED,
-      'group',
-      group.id,
-      group,
-      user?.sub,
-    );
-    return group;
+    return this.groupService.addRoleToGroup(groupId, roleId, user?.sub);
   }
 
   @Delete(':groupId/roles/:roleId')
@@ -134,14 +85,6 @@ export class GroupController {
     @Param('roleId') roleId: string,
     @CurrentUser() user: any,
   ) {
-    const group = await this.groupService.removeRoleFromGroup(groupId, roleId);
-    this.eventsGateway.notifyEntityChange(
-      EventType.ENTITY_UPDATED,
-      'group',
-      group.id,
-      group,
-      user?.sub,
-    );
-    return group;
+    return this.groupService.removeRoleFromGroup(groupId, roleId, user?.sub);
   }
 }
