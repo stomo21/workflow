@@ -3,33 +3,28 @@ import {
   Get,
   Post,
   Put,
-  Delete,
-  Body,
   Param,
-  Query,
+  Body,
   UseGuards,
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { CreateUserDto, UpdateUserDto } from '../dto/create-user.dto';
 import { ClerkAuthGuard } from '../../../common/guards/clerk-auth.guard';
 import { CurrentUser } from '../../../common/decorators/user.decorator';
-import { QueryParams } from '../../../common/services/base.service';
+import { BaseController } from '../../../common/controllers/base.controller';
+import { User } from '../entities/user.entity';
 
 @Controller('users')
 @UseGuards(ClerkAuthGuard)
-export class UserController {
+export class UserController extends BaseController<User> {
   constructor(
     private readonly userService: UserService,
-  ) {}
-
-  @Get()
-  async findAll(@Query() query: QueryParams) {
-    return this.userService.findAll(query);
+  ) {
+    super(userService, 'User');
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.userService.findOne(id, ['groups', 'roles', 'roles.permissions']);
+  protected getRelations(): string[] {
+    return ['groups', 'roles', 'roles.permissions'];
   }
 
   @Get(':id/permissions')
@@ -49,11 +44,5 @@ export class UserController {
     @CurrentUser() user: any,
   ) {
     return this.userService.updateUser(id, updateUserDto, user?.sub);
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.userService.removeWithNotification(id, user?.sub);
-    return { message: 'User deleted successfully' };
   }
 }

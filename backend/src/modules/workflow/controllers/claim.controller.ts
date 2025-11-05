@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Put,
-  Delete,
   Body,
   Param,
   Query,
@@ -14,19 +13,22 @@ import { CreateClaimDto, UpdateClaimDto } from '../dto/claim.dto';
 import { ClerkAuthGuard } from '../../../common/guards/clerk-auth.guard';
 import { CurrentUser } from '../../../common/decorators/user.decorator';
 import { EventsGateway, EventType } from '../../../common/gateways/events.gateway';
+import { BaseController } from '../../../common/controllers/base.controller';
+import { Claim } from '../entities/claim.entity';
 import { QueryParams } from '../../../common/services/base.service';
 
 @Controller('claims')
 @UseGuards(ClerkAuthGuard)
-export class ClaimController {
+export class ClaimController extends BaseController<Claim> {
   constructor(
     private readonly claimService: ClaimService,
     private readonly eventsGateway: EventsGateway,
-  ) {}
+  ) {
+    super(claimService, 'Claim');
+  }
 
-  @Get()
-  async findAll(@Query() query: QueryParams) {
-    return this.claimService.findAll(query);
+  protected getRelations(): string[] {
+    return ['claimedBy'];
   }
 
   @Get('available')
@@ -42,11 +44,6 @@ export class ClaimController {
   @Get('status/:status')
   async findByStatus(@Param('status') status: string, @Query() query: QueryParams) {
     return this.claimService.findByStatus(status, query);
-  }
-
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.claimService.findOne(id, ['claimedBy']);
   }
 
   @Post()
@@ -104,11 +101,5 @@ export class ClaimController {
     );
 
     return claim;
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.claimService.removeWithNotification(id, user?.sub);
-    return { message: 'Claim deleted successfully' };
   }
 }

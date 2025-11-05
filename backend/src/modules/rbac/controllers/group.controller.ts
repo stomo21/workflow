@@ -1,35 +1,30 @@
 import {
   Controller,
-  Get,
   Post,
   Put,
   Delete,
   Body,
   Param,
-  Query,
   UseGuards,
 } from '@nestjs/common';
 import { GroupService } from '../services/group.service';
 import { CreateGroupDto, UpdateGroupDto } from '../dto/group.dto';
 import { ClerkAuthGuard } from '../../../common/guards/clerk-auth.guard';
 import { CurrentUser } from '../../../common/decorators/user.decorator';
-import { QueryParams } from '../../../common/services/base.service';
+import { BaseController } from '../../../common/controllers/base.controller';
+import { Group } from '../entities/group.entity';
 
 @Controller('groups')
 @UseGuards(ClerkAuthGuard)
-export class GroupController {
+export class GroupController extends BaseController<Group> {
   constructor(
     private readonly groupService: GroupService,
-  ) {}
-
-  @Get()
-  async findAll(@Query() query: QueryParams) {
-    return this.groupService.findAll(query);
+  ) {
+    super(groupService, 'Group');
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.groupService.findOne(id, ['users', 'roles']);
+  protected getRelations(): string[] {
+    return ['users', 'roles'];
   }
 
   @Post()
@@ -44,12 +39,6 @@ export class GroupController {
     @CurrentUser() user: any,
   ) {
     return this.groupService.updateGroup(id, updateGroupDto, user?.sub);
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.groupService.removeWithNotification(id, user?.sub);
-    return { message: 'Group deleted successfully' };
   }
 
   @Post(':groupId/users/:userId')

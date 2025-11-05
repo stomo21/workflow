@@ -3,9 +3,8 @@ import {
   Get,
   Post,
   Put,
-  Delete,
-  Body,
   Param,
+  Body,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -13,18 +12,21 @@ import { PatternService } from '../services/pattern.service';
 import { CreatePatternDto, UpdatePatternDto } from '../dto/pattern.dto';
 import { ClerkAuthGuard } from '../../../common/guards/clerk-auth.guard';
 import { CurrentUser } from '../../../common/decorators/user.decorator';
+import { BaseController } from '../../../common/controllers/base.controller';
+import { Pattern } from '../entities/pattern.entity';
 import { QueryParams } from '../../../common/services/base.service';
 
 @Controller('patterns')
 @UseGuards(ClerkAuthGuard)
-export class PatternController {
+export class PatternController extends BaseController<Pattern> {
   constructor(
     private readonly patternService: PatternService,
-  ) {}
+  ) {
+    super(patternService, 'Pattern');
+  }
 
-  @Get()
-  async findAll(@Query() query: QueryParams) {
-    return this.patternService.findAll(query);
+  protected getRelations(): string[] {
+    return ['approvals'];
   }
 
   @Get('type/:type')
@@ -35,11 +37,6 @@ export class PatternController {
   @Get('status/:status')
   async findByStatus(@Param('status') status: string, @Query() query: QueryParams) {
     return this.patternService.findByStatus(status, query);
-  }
-
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.patternService.findOne(id, ['approvals']);
   }
 
   @Post()
@@ -64,11 +61,5 @@ export class PatternController {
   @Post(':id/deactivate')
   async deactivate(@Param('id') id: string, @CurrentUser() user: any) {
     return this.patternService.deactivatePattern(id, user?.sub);
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.patternService.removeWithNotification(id, user?.sub);
-    return { message: 'Pattern deleted successfully' };
   }
 }

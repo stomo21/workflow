@@ -1,35 +1,29 @@
 import {
   Controller,
-  Get,
   Post,
   Put,
-  Delete,
   Body,
   Param,
-  Query,
   UseGuards,
 } from '@nestjs/common';
 import { RoleService } from '../services/role.service';
 import { CreateRoleDto, UpdateRoleDto } from '../dto/role.dto';
 import { ClerkAuthGuard } from '../../../common/guards/clerk-auth.guard';
 import { CurrentUser } from '../../../common/decorators/user.decorator';
-import { QueryParams } from '../../../common/services/base.service';
+import { BaseController } from '../../../common/controllers/base.controller';
+import { Role } from '../entities/role.entity';
 
 @Controller('roles')
 @UseGuards(ClerkAuthGuard)
-export class RoleController {
+export class RoleController extends BaseController<Role> {
   constructor(
     private readonly roleService: RoleService,
-  ) {}
-
-  @Get()
-  async findAll(@Query() query: QueryParams) {
-    return this.roleService.findAll(query);
+  ) {
+    super(roleService, 'Role');
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.roleService.findOne(id, ['permissions', 'users', 'groups']);
+  protected getRelations(): string[] {
+    return ['permissions', 'users', 'groups'];
   }
 
   @Post()
@@ -44,11 +38,5 @@ export class RoleController {
     @CurrentUser() user: any,
   ) {
     return this.roleService.updateRole(id, updateRoleDto, user?.sub);
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.roleService.removeWithNotification(id, user?.sub);
-    return { message: 'Role deleted successfully' };
   }
 }

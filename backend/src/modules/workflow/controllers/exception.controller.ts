@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Put,
-  Delete,
   Body,
   Param,
   Query,
@@ -14,19 +13,22 @@ import { CreateExceptionDto, UpdateExceptionDto } from '../dto/exception.dto';
 import { ClerkAuthGuard } from '../../../common/guards/clerk-auth.guard';
 import { CurrentUser } from '../../../common/decorators/user.decorator';
 import { EventsGateway, EventType } from '../../../common/gateways/events.gateway';
+import { BaseController } from '../../../common/controllers/base.controller';
+import { Exception } from '../entities/exception.entity';
 import { QueryParams } from '../../../common/services/base.service';
 
 @Controller('exceptions')
 @UseGuards(ClerkAuthGuard)
-export class ExceptionController {
+export class ExceptionController extends BaseController<Exception> {
   constructor(
     private readonly exceptionService: ExceptionService,
     private readonly eventsGateway: EventsGateway,
-  ) {}
+  ) {
+    super(exceptionService, 'Exception');
+  }
 
-  @Get()
-  async findAll(@Query() query: QueryParams) {
-    return this.exceptionService.findAll(query);
+  protected getRelations(): string[] {
+    return ['approval'];
   }
 
   @Get('type/:type')
@@ -37,11 +39,6 @@ export class ExceptionController {
   @Get('status/:status')
   async findByStatus(@Param('status') status: string, @Query() query: QueryParams) {
     return this.exceptionService.findByStatus(status, query);
-  }
-
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.exceptionService.findOne(id, ['approval']);
   }
 
   @Post()
@@ -76,11 +73,5 @@ export class ExceptionController {
     @CurrentUser() user: any,
   ) {
     return this.exceptionService.resolveException(id, body.resolution, user?.sub);
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.exceptionService.removeWithNotification(id, user?.sub);
-    return { message: 'Exception deleted successfully' };
   }
 }

@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Put,
-  Delete,
   Body,
   Param,
   Query,
@@ -14,19 +13,22 @@ import { CreateDecisionDto, UpdateDecisionDto } from '../dto/decision.dto';
 import { ClerkAuthGuard } from '../../../common/guards/clerk-auth.guard';
 import { CurrentUser } from '../../../common/decorators/user.decorator';
 import { EventsGateway, EventType } from '../../../common/gateways/events.gateway';
+import { BaseController } from '../../../common/controllers/base.controller';
+import { Decision } from '../entities/decision.entity';
 import { QueryParams } from '../../../common/services/base.service';
 
 @Controller('decisions')
 @UseGuards(ClerkAuthGuard)
-export class DecisionController {
+export class DecisionController extends BaseController<Decision> {
   constructor(
     private readonly decisionService: DecisionService,
     private readonly eventsGateway: EventsGateway,
-  ) {}
+  ) {
+    super(decisionService, 'Decision');
+  }
 
-  @Get()
-  async findAll(@Query() query: QueryParams) {
-    return this.decisionService.findAll(query);
+  protected getRelations(): string[] {
+    return ['approval', 'decidedBy'];
   }
 
   @Get('approval/:approvalId')
@@ -42,11 +44,6 @@ export class DecisionController {
   @Get('type/:type')
   async findByType(@Param('type') type: string, @Query() query: QueryParams) {
     return this.decisionService.findByType(type, query);
-  }
-
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.decisionService.findOne(id, ['approval', 'decidedBy']);
   }
 
   @Post()
@@ -72,11 +69,5 @@ export class DecisionController {
     @CurrentUser() user: any,
   ) {
     return this.decisionService.updateDecision(id, updateDecisionDto, user?.sub);
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.decisionService.removeWithNotification(id, user?.sub);
-    return { message: 'Decision deleted successfully' };
   }
 }

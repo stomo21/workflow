@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Put,
-  Delete,
   Body,
   Param,
   Query,
@@ -14,19 +13,22 @@ import { CreateApprovalDto, UpdateApprovalDto } from '../dto/approval.dto';
 import { ClerkAuthGuard } from '../../../common/guards/clerk-auth.guard';
 import { CurrentUser } from '../../../common/decorators/user.decorator';
 import { EventsGateway, EventType } from '../../../common/gateways/events.gateway';
+import { BaseController } from '../../../common/controllers/base.controller';
+import { Approval } from '../entities/approval.entity';
 import { QueryParams } from '../../../common/services/base.service';
 
 @Controller('approvals')
 @UseGuards(ClerkAuthGuard)
-export class ApprovalController {
+export class ApprovalController extends BaseController<Approval> {
   constructor(
     private readonly approvalService: ApprovalService,
     private readonly eventsGateway: EventsGateway,
-  ) {}
+  ) {
+    super(approvalService, 'Approval');
+  }
 
-  @Get()
-  async findAll(@Query() query: QueryParams) {
-    return this.approvalService.findAll(query);
+  protected getRelations(): string[] {
+    return ['pattern', 'assignedTo', 'decisions', 'exceptions'];
   }
 
   @Get('my-approvals')
@@ -37,11 +39,6 @@ export class ApprovalController {
   @Get('status/:status')
   async findByStatus(@Param('status') status: string, @Query() query: QueryParams) {
     return this.approvalService.findByStatus(status, query);
-  }
-
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.approvalService.findOne(id, ['pattern', 'assignedTo', 'decisions', 'exceptions']);
   }
 
   @Post()
@@ -69,11 +66,5 @@ export class ApprovalController {
     }
 
     return approval;
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.approvalService.removeWithNotification(id, user?.sub);
-    return { message: 'Approval deleted successfully' };
   }
 }
