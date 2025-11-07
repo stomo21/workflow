@@ -1,4 +1,4 @@
-import { Repository, FindOptionsWhere, ILike, FindManyOptions } from 'typeorm';
+import { Repository, FindOptionsWhere, ILike, FindManyOptions, In } from 'typeorm';
 import { BaseEntity } from '../entities/base.entity';
 import { EventsGateway, EventType } from '../gateways/events.gateway';
 
@@ -18,6 +18,17 @@ export interface PaginatedResult<T> {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+export interface FilterOption {
+  value: any;
+  label: string;
+  count: number;
+}
+
+export interface FilterAggregation {
+  field: string;
+  options: FilterOption[];
 }
 
 export abstract class BaseService<T extends BaseEntity> {
@@ -51,10 +62,15 @@ export abstract class BaseService<T extends BaseEntity> {
       Object.assign(where, searchConditions);
     }
 
-    // Apply filters
+    // Apply filters (support both single values and arrays)
     Object.keys(filters).forEach((key) => {
-      if (filters[key] !== undefined && filters[key] !== null) {
-        where[key] = filters[key];
+      const value = filters[key];
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value) && value.length > 0) {
+          where[key] = In(value);
+        } else if (!Array.isArray(value)) {
+          where[key] = value;
+        }
       }
     });
 
@@ -105,6 +121,34 @@ export abstract class BaseService<T extends BaseEntity> {
 
   async restore(id: string): Promise<void> {
     await this.repository.restore(id);
+  }
+
+  // Get filter aggregations for specified fields
+  async getFilterAggregations(fields: string[]): Promise<FilterAggregation[]> {
+    const aggregations: FilterAggregation[] = [];
+
+    for (const field of fields) {
+      const query = this.repository
+        .createQueryBuilder('entity')
+        .select(`entity.${field}`, 'value')
+        .addSelect('COUNT(*)', 'count')
+        .where(`entity.${field} IS NOT NULL`)
+        .groupBy(`entity.${field}`)
+        .orderBy('count', 'DESC');
+
+      const results = await query.getRawMany();
+
+      aggregations.push({
+        field,
+        options: results.map((r) => ({
+          value: r.value,
+          label: String(r.value),
+          count: parseInt(r.count, 10),
+        })),
+      });
+    }
+
+    return aggregations;
   }
 
   // Enhanced methods with event notifications

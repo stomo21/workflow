@@ -31,6 +31,10 @@ export class ApprovalController extends BaseController<Approval> {
     return ['pattern', 'assignedTo', 'decisions', 'exceptions'];
   }
 
+  protected getFilterFields(): string[] {
+    return ['status', 'priority', 'isActive'];
+  }
+
   @Get('my-approvals')
   async findMyApprovals(@Query() query: QueryParams, @CurrentUser() user: any) {
     return this.approvalService.findByAssignee(user.sub, query);

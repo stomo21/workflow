@@ -27,6 +27,10 @@ export class PermissionController extends BaseController<Permission> {
     return ['roles'];
   }
 
+  protected getFilterFields(): string[] {
+    return ['action', 'resource', 'isActive'];
+  }
+
   @Get('action/:action')
   async findByAction(@Param('action') action: string) {
     return this.permissionService.findByAction(action);

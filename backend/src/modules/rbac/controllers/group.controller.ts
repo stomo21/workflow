@@ -27,6 +27,10 @@ export class GroupController extends BaseController<Group> {
     return ['users', 'roles'];
   }
 
+  protected getFilterFields(): string[] {
+    return ['isActive'];
+  }
+
   @Post()
   async create(@Body() createGroupDto: CreateGroupDto, @CurrentUser() user: any) {
     return this.groupService.createGroup(createGroupDto, user?.sub);

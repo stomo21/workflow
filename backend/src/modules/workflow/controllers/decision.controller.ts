@@ -31,6 +31,10 @@ export class DecisionController extends BaseController<Decision> {
     return ['approval', 'decidedBy'];
   }
 
+  protected getFilterFields(): string[] {
+    return ['type'];
+  }
+
   @Get('approval/:approvalId')
   async findByApproval(@Param('approvalId') approvalId: string, @Query() query: QueryParams) {
     return this.decisionService.findByApproval(approvalId, query);

@@ -26,6 +26,10 @@ export class RoleController extends BaseController<Role> {
     return ['permissions', 'users', 'groups'];
   }
 
+  protected getFilterFields(): string[] {
+    return ['isActive'];
+  }
+
   @Post()
   async create(@Body() createRoleDto: CreateRoleDto, @CurrentUser() user: any) {
     return this.roleService.createRole(createRoleDto, user?.sub);

@@ -29,6 +29,10 @@ export class PatternController extends BaseController<Pattern> {
     return ['approvals'];
   }
 
+  protected getFilterFields(): string[] {
+    return ['type', 'status'];
+  }
+
   @Get('type/:type')
   async findByType(@Param('type') type: string, @Query() query: QueryParams) {
     return this.patternService.findByType(type, query);

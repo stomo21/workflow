@@ -31,6 +31,10 @@ export class ExceptionController extends BaseController<Exception> {
     return ['approval'];
   }
 
+  protected getFilterFields(): string[] {
+    return ['type', 'status'];
+  }
+
   @Get('type/:type')
   async findByType(@Param('type') type: string, @Query() query: QueryParams) {
     return this.exceptionService.findByType(type, query);

@@ -31,6 +31,10 @@ export class ClaimController extends BaseController<Claim> {
     return ['claimedBy'];
   }
 
+  protected getFilterFields(): string[] {
+    return ['type', 'status'];
+  }
+
   @Get('available')
   async findAvailable(@Query() query: QueryParams) {
     return this.claimService.findAvailable(query);

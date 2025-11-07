@@ -22,6 +22,12 @@ export abstract class BaseController<T extends BaseEntity> {
     return this.service.findAll(query);
   }
 
+  @Get('filters/aggregations')
+  async getFilterAggregations(@Query('fields') fields: string) {
+    const fieldArray = fields ? fields.split(',') : this.getFilterFields();
+    return this.service.getFilterAggregations(fieldArray);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.service.findOne(id, this.getRelations());
@@ -35,6 +41,11 @@ export abstract class BaseController<T extends BaseEntity> {
 
   // Override this method in child controllers to specify relations for findOne
   protected getRelations(): string[] {
+    return [];
+  }
+
+  // Override this method in child controllers to specify fields for filter aggregations
+  protected getFilterFields(): string[] {
     return [];
   }
 

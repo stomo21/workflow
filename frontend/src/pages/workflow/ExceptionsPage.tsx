@@ -1,154 +1,39 @@
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ColumnDef } from '@tanstack/react-table';
-import { Pencil, Trash2, Plus } from 'lucide-react';
-import { DataTable } from '@/components/data-table/data-table';
-import { Button } from '@/components/ui/button';
-import { exceptionService } from '@/lib/api-client';
+import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { EntityPage } from '@/components/entity-page/EntityPage';
+import { exceptionsConfig } from '@/config/entities/exceptions.config';
 import { wsClient, EventType } from '@/lib/websocket-client';
-
-interface Exception {
-  id: string;
-  title: string;
-  type: string;
-  status: string;
-  errorMessage?: string;
-  createdAt: string;
-}
 
 export default function ExceptionsPage() {
   const queryClient = useQueryClient();
-  const [selectedException, setSelectedException] = useState<Exception | null>(null);
-
-  const { data: exceptionsData, isLoading } = useQuery({
-    queryKey: ['exceptions'],
-    queryFn: () => exceptionService.getAll(),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => exceptionService.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['exceptions'] });
-    },
-  });
 
   useEffect(() => {
     const handleExceptionEvent = () => {
       queryClient.invalidateQueries({ queryKey: ['exceptions'] });
+      queryClient.invalidateQueries({ queryKey: ['exceptions-filters'] });
     };
 
     wsClient.on(EventType.ENTITY_CREATED, handleExceptionEvent);
     wsClient.on(EventType.ENTITY_UPDATED, handleExceptionEvent);
     wsClient.on(EventType.EXCEPTION_RAISED, handleExceptionEvent);
+    wsClient.on(EventType.ENTITY_DELETED, handleExceptionEvent);
 
     return () => {
       wsClient.off(EventType.ENTITY_CREATED, handleExceptionEvent);
       wsClient.off(EventType.ENTITY_UPDATED, handleExceptionEvent);
       wsClient.off(EventType.EXCEPTION_RAISED, handleExceptionEvent);
+      wsClient.off(EventType.ENTITY_DELETED, handleExceptionEvent);
     };
   }, [queryClient]);
 
-  const columns: ColumnDef<Exception>[] = [
-    {
-      accessorKey: 'title',
-      header: 'Title',
-      enableSorting: true,
-    },
-    {
-      accessorKey: 'type',
-      header: 'Type',
-      cell: ({ row }) => (
-        <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-purple-100 text-purple-700">
-          {row.original.type}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }) => {
-        const status = row.original.status;
-        const colorClass =
-          status === 'resolved'
-            ? 'bg-green-100 text-green-700'
-            : status === 'open'
-            ? 'bg-red-100 text-red-700'
-            : 'bg-yellow-100 text-yellow-700';
-        return (
-          <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${colorClass}`}>
-            {status}
-          </span>
-        );
-      },
-    },
-    {
-      accessorKey: 'errorMessage',
-      header: 'Error Message',
-      cell: ({ row }) => (
-        <span className="truncate max-w-xs block">{row.original.errorMessage || 'N/A'}</span>
-      ),
-    },
-    {
-      accessorKey: 'createdAt',
-      header: 'Created At',
-      cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
-      enableSorting: true,
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              setSelectedException(row.original);
-            }}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (confirm('Are you sure you want to delete this exception?')) {
-                deleteMutation.mutate(row.original.id);
-              }
-            }}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Exceptions</h1>
-          <p className="text-muted-foreground">Manage workflow exceptions</p>
-        </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Report Exception
-        </Button>
-      </div>
-
-      <DataTable
-        columns={columns}
-        data={exceptionsData?.data || []}
-        searchable
-        searchPlaceholder="Search exceptions..."
-        onRowClick={(exception) => setSelectedException(exception)}
-      />
-    </div>
+    <EntityPage
+      config={exceptionsConfig}
+      createButtonLabel="Report Exception"
+      onCreateClick={() => {
+        // TODO: Open create exception dialog/navigate to create page
+        console.log('Create exception clicked');
+      }}
+    />
   );
 }

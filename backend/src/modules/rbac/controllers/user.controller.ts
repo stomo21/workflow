@@ -27,6 +27,10 @@ export class UserController extends BaseController<User> {
     return ['groups', 'roles', 'roles.permissions'];
   }
 
+  protected getFilterFields(): string[] {
+    return ['isActive'];
+  }
+
   @Get(':id/permissions')
   async getUserPermissions(@Param('id') id: string) {
     return this.userService.getUserPermissions(id);
