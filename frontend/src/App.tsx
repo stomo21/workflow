@@ -19,6 +19,7 @@ import ExceptionsPage from './pages/workflow/ExceptionsPage';
 import ClaimsPage from './pages/workflow/ClaimsPage';
 import DecisionsPage from './pages/workflow/DecisionsPage';
 import AdminSettings from './pages/AdminSettings';
+import NotionComponentsExample from './pages/NotionComponentsExample';
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ function AppContent() {
         <Route path="/exceptions" element={<ExceptionsPage />} />
         <Route path="/claims" element={<ClaimsPage />} />
         <Route path="/decisions" element={<DecisionsPage />} />
+        <Route path="/notion-demo" element={<NotionComponentsExample />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
