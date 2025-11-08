@@ -1,11 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { EntityPage } from '@/components/entity-page/EntityPage';
+import { PermissionDialog } from '@/components/rbac/PermissionDialog';
 import { permissionsConfig } from '@/config/entities/permissions.config';
 import { wsClient, EventType } from '@/lib/websocket-client';
 
 export default function PermissionsPage() {
   const queryClient = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedPermission, setSelectedPermission] = useState<any>(null);
 
   useEffect(() => {
     const handlePermissionEvent = () => {
@@ -24,14 +27,28 @@ export default function PermissionsPage() {
     };
   }, [queryClient]);
 
+  const handleCreateClick = () => {
+    setSelectedPermission(null);
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    setSelectedPermission(null);
+  };
+
   return (
-    <EntityPage
-      config={permissionsConfig}
-      createButtonLabel="Add Permission"
-      onCreateClick={() => {
-        // TODO: Open create permission dialog/navigate to create page
-        console.log('Create permission clicked');
-      }}
-    />
+    <>
+      <EntityPage
+        config={permissionsConfig}
+        createButtonLabel="New Permission"
+        onCreateClick={handleCreateClick}
+      />
+      <PermissionDialog
+        open={dialogOpen}
+        onClose={handleCloseDialog}
+        permission={selectedPermission}
+      />
+    </>
   );
 }

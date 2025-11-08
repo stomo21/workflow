@@ -1,11 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { EntityPage } from '@/components/entity-page/EntityPage';
+import { RoleDialog } from '@/components/rbac/RoleDialog';
 import { rolesConfig } from '@/config/entities/roles.config';
 import { wsClient, EventType } from '@/lib/websocket-client';
 
 export default function RolesPage() {
   const queryClient = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<any>(null);
 
   useEffect(() => {
     const handleRoleEvent = () => {
@@ -24,14 +27,28 @@ export default function RolesPage() {
     };
   }, [queryClient]);
 
+  const handleCreateClick = () => {
+    setSelectedRole(null);
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    setSelectedRole(null);
+  };
+
   return (
-    <EntityPage
-      config={rolesConfig}
-      createButtonLabel="Add Role"
-      onCreateClick={() => {
-        // TODO: Open create role dialog/navigate to create page
-        console.log('Create role clicked');
-      }}
-    />
+    <>
+      <EntityPage
+        config={rolesConfig}
+        createButtonLabel="New Role"
+        onCreateClick={handleCreateClick}
+      />
+      <RoleDialog
+        open={dialogOpen}
+        onClose={handleCloseDialog}
+        role={selectedRole}
+      />
+    </>
   );
 }
