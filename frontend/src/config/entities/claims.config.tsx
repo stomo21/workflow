@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
+import { BadgeNotion } from '@/components/notion';
 import { EntityConfig } from '@/types/entity-config';
 
 export interface Claim {
@@ -40,9 +40,9 @@ export const claimsConfig: EntityConfig<Claim> = {
       accessorKey: 'type',
       header: 'Type',
       cell: ({ row }) => (
-        <Badge variant="outline" className="bg-indigo-100 text-indigo-800">
+        <BadgeNotion variant="outline" className="bg-indigo-100 text-indigo-800">
           {row.getValue('type')}
-        </Badge>
+        </BadgeNotion>
       ),
     },
     {
@@ -51,9 +51,9 @@ export const claimsConfig: EntityConfig<Claim> = {
       cell: ({ row }) => {
         const status = row.getValue('status') as string;
         return (
-          <Badge className={statusColors[status] || ''} variant="outline">
+          <BadgeNotion className={statusColors[status] || ''} variant="outline">
             {status.replace('_', ' ').charAt(0).toUpperCase() + status.replace('_', ' ').slice(1)}
-          </Badge>
+          </BadgeNotion>
         );
       },
     },

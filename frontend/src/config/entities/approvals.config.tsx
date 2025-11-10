@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
+import { BadgeNotion } from '@/components/notion';
 import { EntityConfig } from '@/types/entity-config';
 
 export interface Approval {
@@ -19,18 +19,18 @@ export interface Approval {
   exceptions?: any[];
 }
 
-const statusColors = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  escalated: 'bg-orange-100 text-orange-800',
+const statusVariants: Record<string, any> = {
+  pending: 'yellow',
+  approved: 'green',
+  rejected: 'red',
+  escalated: 'orange',
 };
 
-const priorityColors = {
-  low: 'bg-gray-100 text-gray-800',
-  medium: 'bg-blue-100 text-blue-800',
-  high: 'bg-orange-100 text-orange-800',
-  critical: 'bg-red-100 text-red-800',
+const priorityVariants: Record<string, any> = {
+  low: 'default',
+  medium: 'blue',
+  high: 'orange',
+  critical: 'red',
 };
 
 export const approvalsConfig: EntityConfig<Approval> = {
@@ -52,9 +52,9 @@ export const approvalsConfig: EntityConfig<Approval> = {
       cell: ({ row }) => {
         const status = row.getValue('status') as string;
         return (
-          <Badge className={statusColors[status] || ''} variant="outline">
+          <BadgeNotion variant={statusVariants[status] || 'default'}>
             {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Badge>
+          </BadgeNotion>
         );
       },
     },
@@ -64,9 +64,9 @@ export const approvalsConfig: EntityConfig<Approval> = {
       cell: ({ row }) => {
         const priority = row.getValue('priority') as string;
         return (
-          <Badge className={priorityColors[priority] || ''} variant="outline">
+          <BadgeNotion variant={priorityVariants[priority] || 'default'}>
             {priority.charAt(0).toUpperCase() + priority.slice(1)}
-          </Badge>
+          </BadgeNotion>
         );
       },
     },

@@ -1,11 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { EntityPage } from '@/components/entity-page/EntityPage';
+import { AlertTriangle } from 'lucide-react';
+import { EntityPageNotion } from '@/components/entity-page/EntityPageNotion';
 import { exceptionsConfig } from '@/config/entities/exceptions.config';
 import { wsClient, EventType } from '@/lib/websocket-client';
 
 export default function ExceptionsPage() {
   const queryClient = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     const handleExceptionEvent = () => {
@@ -14,7 +16,7 @@ export default function ExceptionsPage() {
     };
 
     wsClient.on(EventType.ENTITY_CREATED, handleExceptionEvent);
-    wsClient.on(EventType.ENTITY_UPDATED, handleExceptionEvent);
+    wsClient.on(EntityType.ENTITY_UPDATED, handleExceptionEvent);
     wsClient.on(EventType.EXCEPTION_RAISED, handleExceptionEvent);
     wsClient.on(EventType.ENTITY_DELETED, handleExceptionEvent);
 
@@ -26,14 +28,16 @@ export default function ExceptionsPage() {
     };
   }, [queryClient]);
 
+  const handleCreateClick = () => {
+    setDialogOpen(true);
+  };
+
   return (
-    <EntityPage
+    <EntityPageNotion
       config={exceptionsConfig}
       createButtonLabel="Report Exception"
-      onCreateClick={() => {
-        // TODO: Open create exception dialog/navigate to create page
-        console.log('Create exception clicked');
-      }}
+      onCreateClick={handleCreateClick}
+      icon={<AlertTriangle className="h-10 w-10 text-red-500" />}
     />
   );
 }

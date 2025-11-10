@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
+import { BadgeNotion } from '@/components/notion';
 import { EntityConfig } from '@/types/entity-config';
 
 export interface Pattern {
@@ -39,9 +39,9 @@ export const patternsConfig: EntityConfig<Pattern> = {
       accessorKey: 'type',
       header: 'Type',
       cell: ({ row }) => (
-        <Badge variant="outline" className="bg-blue-100 text-blue-800">
+        <BadgeNotion variant="outline" className="bg-blue-100 text-blue-800">
           {row.getValue('type')}
-        </Badge>
+        </BadgeNotion>
       ),
     },
     {
@@ -50,9 +50,9 @@ export const patternsConfig: EntityConfig<Pattern> = {
       cell: ({ row }) => {
         const status = row.getValue('status') as string;
         return (
-          <Badge className={statusColors[status] || ''} variant="outline">
+          <BadgeNotion className={statusColors[status] || ''} variant="outline">
             {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Badge>
+          </BadgeNotion>
         );
       },
     },

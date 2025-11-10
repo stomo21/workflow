@@ -1,11 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { EntityPage } from '@/components/entity-page/EntityPage';
+import { ClipboardList } from 'lucide-react';
+import { EntityPageNotion } from '@/components/entity-page/EntityPageNotion';
 import { claimsConfig } from '@/config/entities/claims.config';
 import { wsClient, EventType } from '@/lib/websocket-client';
 
 export default function ClaimsPage() {
   const queryClient = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     const handleClaimEvent = () => {
@@ -20,20 +22,22 @@ export default function ClaimsPage() {
 
     return () => {
       wsClient.off(EventType.ENTITY_CREATED, handleClaimEvent);
-      wsClient.off(EventType.ENTITY_UPDATED, handleClaimEvent);
+      wsClient.off(EntityType.ENTITY_UPDATED, handleClaimEvent);
       wsClient.off(EventType.CLAIM_UPDATED, handleClaimEvent);
       wsClient.off(EventType.ENTITY_DELETED, handleClaimEvent);
     };
   }, [queryClient]);
 
+  const handleCreateClick = () => {
+    setDialogOpen(true);
+  };
+
   return (
-    <EntityPage
+    <EntityPageNotion
       config={claimsConfig}
       createButtonLabel="Create Claim"
-      onCreateClick={() => {
-        // TODO: Open create claim dialog/navigate to create page
-        console.log('Create claim clicked');
-      }}
+      onCreateClick={handleCreateClick}
+      icon={<ClipboardList className="h-10 w-10 text-cyan-500" />}
     />
   );
 }

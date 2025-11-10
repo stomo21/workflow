@@ -1,11 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { EntityPage } from '@/components/entity-page/EntityPage';
+import { GitBranch } from 'lucide-react';
+import { EntityPageNotion } from '@/components/entity-page/EntityPageNotion';
 import { patternsConfig } from '@/config/entities/patterns.config';
 import { wsClient, EventType } from '@/lib/websocket-client';
 
 export default function PatternsPage() {
   const queryClient = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     const handlePatternEvent = () => {
@@ -19,19 +21,21 @@ export default function PatternsPage() {
 
     return () => {
       wsClient.off(EventType.ENTITY_CREATED, handlePatternEvent);
-      wsClient.off(EventType.ENTITY_UPDATED, handlePatternEvent);
+      wsClient.off(EntityType.ENTITY_UPDATED, handlePatternEvent);
       wsClient.off(EventType.ENTITY_DELETED, handlePatternEvent);
     };
   }, [queryClient]);
 
+  const handleCreateClick = () => {
+    setDialogOpen(true);
+  };
+
   return (
-    <EntityPage
+    <EntityPageNotion
       config={patternsConfig}
       createButtonLabel="Create Pattern"
-      onCreateClick={() => {
-        // TODO: Open create pattern dialog/navigate to create page
-        console.log('Create pattern clicked');
-      }}
+      onCreateClick={handleCreateClick}
+      icon={<GitBranch className="h-10 w-10 text-purple-500" />}
     />
   );
 }

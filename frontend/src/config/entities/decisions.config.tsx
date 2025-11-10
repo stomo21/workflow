@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
+import { BadgeNotion } from '@/components/notion';
 import { EntityConfig } from '@/types/entity-config';
 
 export interface Decision {
@@ -34,9 +34,9 @@ export const decisionsConfig: EntityConfig<Decision> = {
       cell: ({ row }) => {
         const type = row.getValue('type') as string;
         return (
-          <Badge className={typeColors[type] || ''} variant="outline">
+          <BadgeNotion className={typeColors[type] || ''} variant="outline">
             {type.replace('_', ' ').charAt(0).toUpperCase() + type.replace('_', ' ').slice(1)}
-          </Badge>
+          </BadgeNotion>
         );
       },
     },
