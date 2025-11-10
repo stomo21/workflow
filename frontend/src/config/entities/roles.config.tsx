@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
+import { BadgeNotion } from '@/components/notion';
 import { EntityConfig } from '@/types/entity-config';
 
 export interface Role {
@@ -41,9 +41,9 @@ export const rolesConfig: EntityConfig<Role> = {
       accessorKey: 'isActive',
       header: 'Status',
       cell: ({ row }) => (
-        <Badge variant={row.getValue('isActive') ? 'default' : 'secondary'}>
+        <BadgeNotion variant={row.getValue('isActive') ? 'green' : 'default'}>
           {row.getValue('isActive') ? 'Active' : 'Inactive'}
-        </Badge>
+        </BadgeNotion>
       ),
     },
     {

@@ -4,6 +4,7 @@ export * from "./InputNotion"
 export * from "./SelectNotion"
 export * from "./TextareaNotion"
 export * from "./BadgeNotion"
+export * from "./DialogNotion"
 
 // Layout Components
 export * from "./SidebarNotion"

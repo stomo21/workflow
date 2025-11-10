@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { EntityPage } from '@/components/entity-page/EntityPage';
+import { Shield } from 'lucide-react';
+import { EntityPageNotion } from '@/components/entity-page/EntityPageNotion';
 import { RoleDialog } from '@/components/rbac/RoleDialog';
 import { rolesConfig } from '@/config/entities/roles.config';
 import { wsClient, EventType } from '@/lib/websocket-client';
@@ -39,10 +40,11 @@ export default function RolesPage() {
 
   return (
     <>
-      <EntityPage
+      <EntityPageNotion
         config={rolesConfig}
         createButtonLabel="New Role"
         onCreateClick={handleCreateClick}
+        icon={<Shield className="h-10 w-10 text-purple-500" />}
       />
       <RoleDialog
         open={dialogOpen}

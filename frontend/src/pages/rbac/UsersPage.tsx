@@ -1,11 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { EntityPage } from '@/components/entity-page/EntityPage';
+import { Users } from 'lucide-react';
+import { EntityPageNotion } from '@/components/entity-page/EntityPageNotion';
 import { usersConfig } from '@/config/entities/users.config';
 import { wsClient, EventType } from '@/lib/websocket-client';
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     const handleUserEvent = () => {
@@ -24,14 +26,16 @@ export default function UsersPage() {
     };
   }, [queryClient]);
 
+  const handleCreateClick = () => {
+    setDialogOpen(true);
+  };
+
   return (
-    <EntityPage
+    <EntityPageNotion
       config={usersConfig}
       createButtonLabel="Add User"
-      onCreateClick={() => {
-        // TODO: Open create user dialog/navigate to create page
-        console.log('Create user clicked');
-      }}
+      onCreateClick={handleCreateClick}
+      icon={<Users className="h-10 w-10 text-blue-500" />}
     />
   );
 }

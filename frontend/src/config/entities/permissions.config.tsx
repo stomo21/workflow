@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
+import { BadgeNotion } from '@/components/notion';
 import { EntityConfig } from '@/types/entity-config';
 
 export interface Permission {
@@ -32,18 +32,18 @@ export const permissionsConfig: EntityConfig<Permission> = {
       accessorKey: 'action',
       header: 'Action',
       cell: ({ row }) => (
-        <Badge variant="outline" className="bg-blue-100 text-blue-800">
+        <BadgeNotion variant="blue">
           {row.getValue('action')}
-        </Badge>
+        </BadgeNotion>
       ),
     },
     {
       accessorKey: 'resource',
       header: 'Resource',
       cell: ({ row }) => (
-        <Badge variant="outline" className="bg-purple-100 text-purple-800">
+        <BadgeNotion variant="purple">
           {row.getValue('resource')}
-        </Badge>
+        </BadgeNotion>
       ),
     },
     {
@@ -59,9 +59,9 @@ export const permissionsConfig: EntityConfig<Permission> = {
       accessorKey: 'isActive',
       header: 'Status',
       cell: ({ row }) => (
-        <Badge variant={row.getValue('isActive') ? 'default' : 'secondary'}>
+        <BadgeNotion variant={row.getValue('isActive') ? 'green' : 'default'}>
           {row.getValue('isActive') ? 'Active' : 'Inactive'}
-        </Badge>
+        </BadgeNotion>
       ),
     },
   ],

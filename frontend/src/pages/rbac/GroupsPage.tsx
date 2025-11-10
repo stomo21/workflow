@@ -1,11 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { EntityPage } from '@/components/entity-page/EntityPage';
+import { UsersRound } from 'lucide-react';
+import { EntityPageNotion } from '@/components/entity-page/EntityPageNotion';
 import { groupsConfig } from '@/config/entities/groups.config';
 import { wsClient, EventType } from '@/lib/websocket-client';
 
 export default function GroupsPage() {
   const queryClient = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     const handleGroupEvent = () => {
@@ -20,18 +22,20 @@ export default function GroupsPage() {
     return () => {
       wsClient.off(EventType.ENTITY_CREATED, handleGroupEvent);
       wsClient.off(EventType.ENTITY_UPDATED, handleGroupEvent);
-      wsClient.off(EventType.ENTITY_DELETED, handleGroupEvent);
+      wsClient.off(EntityType.ENTITY_DELETED, handleGroupEvent);
     };
   }, [queryClient]);
 
+  const handleCreateClick = () => {
+    setDialogOpen(true);
+  };
+
   return (
-    <EntityPage
+    <EntityPageNotion
       config={groupsConfig}
-      createButtonLabel="Add Group"
-      onCreateClick={() => {
-        // TODO: Open create group dialog/navigate to create page
-        console.log('Create group clicked');
-      }}
+      createButtonLabel="New Group"
+      onCreateClick={handleCreateClick}
+      icon={<UsersRound className="h-10 w-10 text-green-500" />}
     />
   );
 }

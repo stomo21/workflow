@@ -23,14 +23,16 @@ const SidebarNotionItemComponent: React.FC<{
   depth?: number
   onItemClick?: (item: SidebarNotionItem) => void
 }> = ({ item, depth = 0, onItemClick }) => {
-  const [isOpen, setIsOpen] = React.useState(false)
+  const [isOpen, setIsOpen] = React.useState(item.children?.some(child => child.active) || false)
   const hasChildren = item.children && item.children.length > 0
 
   return (
     <div>
       <button
         onClick={() => {
-          if (hasChildren) setIsOpen(!isOpen)
+          if (hasChildren) {
+            setIsOpen(!isOpen)
+          }
           onItemClick?.(item)
         }}
         className={cn(

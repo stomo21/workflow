@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { EntityPage } from '@/components/entity-page/EntityPage';
+import { Key } from 'lucide-react';
+import { EntityPageNotion } from '@/components/entity-page/EntityPageNotion';
 import { PermissionDialog } from '@/components/rbac/PermissionDialog';
 import { permissionsConfig } from '@/config/entities/permissions.config';
 import { wsClient, EventType } from '@/lib/websocket-client';
@@ -18,11 +19,11 @@ export default function PermissionsPage() {
 
     wsClient.on(EventType.ENTITY_CREATED, handlePermissionEvent);
     wsClient.on(EventType.ENTITY_UPDATED, handlePermissionEvent);
-    wsClient.on(EventType.ENTITY_DELETED, handlePermissionEvent);
+    wsClient.on(EntityType.ENTITY_DELETED, handlePermissionEvent);
 
     return () => {
       wsClient.off(EventType.ENTITY_CREATED, handlePermissionEvent);
-      wsClient.off(EventType.ENTITY_UPDATED, handlePermissionEvent);
+      wsClient.off(EntityType.ENTITY_UPDATED, handlePermissionEvent);
       wsClient.off(EventType.ENTITY_DELETED, handlePermissionEvent);
     };
   }, [queryClient]);
@@ -39,10 +40,11 @@ export default function PermissionsPage() {
 
   return (
     <>
-      <EntityPage
+      <EntityPageNotion
         config={permissionsConfig}
         createButtonLabel="New Permission"
         onCreateClick={handleCreateClick}
+        icon={<Key className="h-10 w-10 text-orange-500" />}
       />
       <PermissionDialog
         open={dialogOpen}
